@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="eu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aditz Perifrastikoak (aspektua eta aldia) Imanol Muñiz Ibarra</title>
+    <style>
+        :root {
+            /* Colores Mate - Euskadi Style */
+            --green-mate: #2E8B57;  /* Verde */
+            --red-mate: #CD5C5C;    /* Rojo */
+            --white-bg: #F4F7F6;    /* Fondo claro */
+            --text-dark: #2C3E50;
+            --accent: #34495E;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--white-bg);
+            color: var(--text-dark);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            width: 100%;
+            max-width: 700px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            padding: 30px;
+            text-align: center;
+            border-top: 8px solid var(--green-mate);
+            position: relative;
+        }
+
+        /* Header con Título y Puntos */
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+        }
+
+        h1 {
+            color: var(--green-mate);
+            margin: 0;
+            font-size: 1.6rem;
+            text-align: left;
+        }
+
+        .score-box {
+            background-color: var(--green-mate);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .progress {
+            font-size: 0.9rem;
+            color: #888;
+            margin-bottom: 10px;
+            text-align: left;
+        }
+
+        /* Zona de la frase */
+        .sentence-box {
+            font-size: 1.4rem;
+            margin: 30px 0;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .word {
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+            user-select: none;
+        }
+
+        .word:hover {
+            background-color: #e0e0e0;
+        }
+
+        .word.selected {
+            background-color: var(--accent);
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .word.correct {
+            background-color: var(--green-mate);
+            color: white;
+            border-color: var(--green-mate);
+        }
+
+        .word.wrong {
+            background-color: var(--red-mate);
+            color: white;
+        }
+
+        /* Botones */
+        .btn {
+            background-color: var(--green-mate);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            background-color: #246b43;
+        }
+
+        .btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* Zona de Morfología (Paso 2) */
+        #morphology-section {
+            display: none;
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border: 1px solid #eee;
+            animation: fadeIn 0.5s;
+        }
+
+        .explanation-box {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: left;
+            font-size: 0.95rem;
+        }
+
+        .selectors {
+            display: flex;
+            justify-content: space-around;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .selector-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: var(--text-dark);
+        }
+
+        select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 1rem;
+        }
+
+        /* Feedback Final */
+        #final-feedback {
+            margin-top: 15px;
+            font-weight: bold;
+            min-height: 24px;
+            font-size: 1.1rem;
+        }
+        
+        .success-text { color: var(--green-mate); }
+        .error-text { color: var(--red-mate); }
+
+        /* Estilos input nombre final */
+        .name-input {
+            padding: 10px;
+            font-size: 1.2rem;
+            border-radius: 8px;
+            border: 2px solid var(--green-mate);
+            margin: 20px 0;
+            width: 80%;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Ocultar elementos */
+        .hidden { display: none !important; }
+
+    </style>
+</head>
+<body>
+
+<div class="container" id="main-container">
+    <div class="header-top">
+        <h1>Euskal Aditza</h1>
+        <div class="score-box">Puntuak: <span id="score-display">0</span></div>
+    </div>
+    
+    <div class="progress">Esaldi: <span id="current-count">1</span> / 30</div>
+
+    <p style="font-size: 0.9rem; color: #666;">1. pausoa: Aukeratu aditzaren bi zatiak (Aditz nagusia eta laguntzailea).</p>
+    
+    <div class="sentence-box" id="sentence-container">
+        </div>
+
+    <button id="check-verb-btn" class="btn" onclick="checkVerb()">Egiaztatu Aditza</button>
+
+    <div id="morphology-section">
+        <div class="explanation-box" id="verb-explanation">
+            </div>
+
+        <p style="font-size: 0.9rem; color: #666; margin-bottom: 10px;">2. pausoa: Aukeratu Aspektua eta Aldia.</p>
+
+        <div class="selectors">
+            <div class="selector-group">
+                <label for="aspect-select">Aspektua:</label>
+                <select id="aspect-select">
+                    <option value="">-- Aukeratu --</option>
+                    <option value="burutua">Burutua</option>
+                    <option value="burutugabea">Burutugabea</option>
+                    <option value="geroaldikoa">Geroaldikoa</option>
+                </select>
+            </div>
+
+            <div class="selector-group" id="tense-group">
+                <label for="tense-select">Aldia:</label>
+                <select id="tense-select">
+                    <option value="">-- Aukeratu --</option>
+                    <option value="oraina">Oraina</option>
+                    <option value="iragana">Iragana</option>
+                </select>
+            </div>
+        </div>
+
+        <button id="check-morph-btn" class="btn" onclick="checkMorphology()">Egiaztatu Analisia</button>
+    </div>
+
+    <div id="final-feedback"></div>
+    <button id="next-btn" class="btn hidden" onclick="nextQuestion()">Hurrengoa &rarr;</button>
+</div>
+
+<script>
+    // --- DATOS (Las 30 frases) ---
+    const database = [
+        // BLOQUE 1: BURUTUA
+        { s: "Guk atzo pelikula hori ikusi genuen.", v: ["ikusi", "genuen"], nag: "ikusi", lag: "genuen", asp: "burutua", ald: "iragana" },
+        { s: "Zuek lan guztia amaitu duzue.", v: ["amaitu", "duzue"], nag: "amaitu", lag: "duzue", asp: "burutua", ald: "oraina" },
+        { s: "Goizean berandu jaiki nintzen.", v: ["jaiki", "nintzen"], nag: "jaiki", lag: "nintzen", asp: "burutua", ald: "iragana" },
+        { s: "Umeak parkean erori dira.", v: ["erori", "dira"], nag: "erori", lag: "dira", asp: "burutua", ald: "oraina" },
+        { s: "Jonek atea ireki zuen.", v: ["ireki", "zuen"], nag: "ireki", lag: "zuen", asp: "burutua", ald: "iragana" },
+        { s: "Zuk giltzak galdu dituzu.", v: ["galdu", "dituzu"], nag: "galdu", lag: "dituzu", asp: "burutua", ald: "oraina" },
+        { s: "Gu oso pozik egon ginen festan.", v: ["egon", "ginen"], nag: "egon", lag: "ginen", asp: "burutua", ald: "iragana" },
+        { s: "Horiek trenez etorri dira.", v: ["etorri", "dira"], nag: "etorri", lag: "dira", asp: "burutua", ald: "oraina" },
+        { s: "Nik liburua irakurri nuen eskolan.", v: ["irakurri", "nuen"], nag: "irakurri", lag: "nuen", asp: "burutua", ald: "iragana" },
+        { s: "Aitonak istorio bat kontatu du.", v: ["kontatu", "du"], nag: "kontatu", lag: "du", asp: "burutua", ald: "oraina" },
+
+        // BLOQUE 2: BURUTUGABEA
+        { s: "Ni egunero mendira joaten naiz.", v: ["joaten", "naiz"], nag: "joaten", lag: "naiz", asp: "burutugabea", ald: "oraina" },
+        { s: "Zuek lehen asko ibiltzen zineten bizikletaz.", v: ["ibiltzen", "zineten"], nag: "ibiltzen", lag: "zineten", asp: "burutugabea", ald: "iragana" },
+        { s: "Guk beti egia esaten dugu.", v: ["esaten", "dugu"], nag: "esaten", lag: "dugu", asp: "burutugabea", ald: "oraina" },
+        { s: "Mirenek ondo gidatzen zuen kotxea.", v: ["gidatzen", "zuen"], nag: "gidatzen", lag: "zuen", asp: "burutugabea", ald: "iragana" },
+        { s: "Horiek igandero elkartzen dira.", v: ["elkartzen", "dira"], nag: "elkartzen", lag: "dira", asp: "burutugabea", ald: "oraina" },
+        { s: "Nik txikitan dena jaten nuen.", v: ["jaten", "nuen"], nag: "jaten", lag: "nuen", asp: "burutugabea", ald: "iragana" },
+        { s: "Zuk oso ondo idazten duzu.", v: ["idazten", "duzu"], nag: "idazten", lag: "duzu", asp: "burutugabea", ald: "oraina" },
+        { s: "Umeak kalean jolasten ziren.", v: ["jolasten", "ziren"], nag: "jolasten", lag: "ziren", asp: "burutugabea", ald: "iragana" },
+        { s: "Guk musika entzuten dugu irratian.", v: ["entzuten", "dugu"], nag: "entzuten", lag: "dugu", asp: "burutugabea", ald: "oraina" },
+        { s: "Anek askotan galdetzen zuen hori.", v: ["galdetzen", "zuen"], nag: "galdetzen", lag: "zuen", asp: "burutugabea", ald: "iragana" },
+
+        // BLOQUE 3: GEROALDIKOA
+        { s: "Gu bihar hondartzara joango gara.", v: ["joango", "gara"], nag: "joango", lag: "gara", asp: "geroaldikoa", ald: "null" },
+        { s: "Zuk azterketa gaindituko duzu.", v: ["gaindituko", "duzu"], nag: "gaindituko", lag: "duzu", asp: "geroaldikoa", ald: "null" },
+        { s: "Nik datorren urtean ikasiko dut euskara.", v: ["ikasiko", "dut"], nag: "ikasiko", lag: "dut", asp: "geroaldikoa", ald: "null" },
+        { s: "Beraiek etxe berria erosiko dute.", v: ["erosiko", "dute"], nag: "erosiko", lag: "dute", asp: "geroaldikoa", ald: "null" },
+        { s: "Zu laster ondo sentituko zara.", v: ["sentituko", "zara"], nag: "sentituko", lag: "zara", asp: "geroaldikoa", ald: "null" },
+        { s: "Mikelek afaria prestatuko du.", v: ["prestatuko", "du"], nag: "prestatuko", lag: "du", asp: "geroaldikoa", ald: "null" },
+        { s: "Gu hemen egongo gara zure zain.", v: ["egongo", "gara"], nag: "egongo", lag: "gara", asp: "geroaldikoa", ald: "null" },
+        { s: "Zuek partida irabaziko duzue.", v: ["irabaziko", "duzue"], nag: "irabaziko", lag: "duzue", asp: "geroaldikoa", ald: "null" },
+        { s: "Trenak ez du atzerapenik izango.", v: ["izango", "du"], nag: "izango", lag: "du", asp: "geroaldikoa", ald: "null" },
+        { s: "Guk ez dugu ezer esango.", v: ["esango", "dugu"], nag: "esango", lag: "dugu", asp: "geroaldikoa", ald: "null" }
+    ];
+
+    // --- VARIABLES DE ESTADO ---
+    let gameData = [];
+    let currentIndex = 0;
+    let currentSentenceData = null;
+    let selectedIndices = []; 
+    let phase = 1; 
+    let score = 0;
+    let hasFailedCurrent = false; // Para saber si ha fallado en la pregunta actual
+
+    // --- ELEMENTOS DOM ---
+    const sentenceContainer = document.getElementById('sentence-container');
+    const morphSection = document.getElementById('morphology-section');
+    const checkVerbBtn = document.getElementById('check-verb-btn');
+    const explanationBox = document.getElementById('verb-explanation');
+    const tenseGroup = document.getElementById('tense-group');
+    const aspectSelect = document.getElementById('aspect-select');
+    const tenseSelect = document.getElementById('tense-select');
+    const finalFeedback = document.getElementById('final-feedback');
+    const nextBtn = document.getElementById('next-btn');
+    const checkMorphBtn = document.getElementById('check-morph-btn');
+    const currentCountDisplay = document.getElementById('current-count');
+    const scoreDisplay = document.getElementById('score-display');
+    const mainContainer = document.getElementById('main-container');
+
+    // --- FUNCION PARA ALEATORIZAR (Shuffle) ---
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    // --- INICIALIZAR ---
+    function initGame() {
+        // Clonamos la base de datos y la barajamos
+        gameData = shuffleArray([...database]); 
+        currentIndex = 0;
+        score = 0;
+        scoreDisplay.innerText = score;
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        // Resetear estado
+        phase = 1;
+        selectedIndices = [];
+        hasFailedCurrent = false; // Nuevo intento, reiniciamos el "fallo"
+        currentSentenceData = gameData[currentIndex];
+        
+        // Resetear UI
+        sentenceContainer.innerHTML = '';
+        morphSection.style.display = 'none';
+        checkVerbBtn.style.display = 'inline-block';
+        checkVerbBtn.disabled = false;
+        checkMorphBtn.style.display = 'inline-block';
+        finalFeedback.innerHTML = '';
+        nextBtn.classList.add('hidden');
+        aspectSelect.value = "";
+        tenseSelect.value = "";
+        currentCountDisplay.innerText = currentIndex + 1;
+
+        // Renderizar frase
+        const words = currentSentenceData.s.split(' ');
+        
+        words.forEach((wordText, index) => {
+            const span = document.createElement('span');
+            span.classList.add('word');
+            span.innerText = wordText;
+            span.dataset.index = index;
+            span.dataset.cleanWord = cleanWord(wordText);
+            
+            span.onclick = () => toggleWordSelection(span, index);
+            sentenceContainer.appendChild(span);
+        });
+    }
+
+    function cleanWord(w) {
+        return w.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").toLowerCase();
+    }
+
+    function toggleWordSelection(element, index) {
+        if (phase !== 1) return; 
+
+        if (selectedIndices.includes(index)) {
+            selectedIndices = selectedIndices.filter(i => i !== index);
+            element.classList.remove('selected');
+        } else {
+            selectedIndices.push(index);
+            element.classList.add('selected');
+        }
+    }
+
+    function checkVerb() {
+        const domWords = document.querySelectorAll('.word');
+        const selectedWordsClean = selectedIndices.map(i => domWords[i].dataset.cleanWord);
+        const correctWords = currentSentenceData.v.map(w => w.toLowerCase());
+        
+        const isCorrectLength = selectedWordsClean.length === correctWords.length;
+        const contentMatch = selectedWordsClean.every(val => correctWords.includes(val));
+
+        if (isCorrectLength && contentMatch) {
+            // CORRECTO
+            selectedIndices.forEach(i => {
+                domWords[i].classList.remove('selected');
+                domWords[i].classList.add('correct');
+            });
+            showMorphologyPhase();
+        } else {
+            // INCORRECTO
+            hasFailedCurrent = true; // Marcamos que ha fallado
+            finalFeedback.innerHTML = "<span class='error-text'>Okerra! Saiatu berriro (Aditz nagusia + Laguntzailea).</span>";
+            selectedIndices.forEach(i => domWords[i].classList.remove('selected'));
+            selectedIndices = [];
+            setTimeout(() => finalFeedback.innerHTML = "", 2000);
+        }
+    }
+
+    function showMorphologyPhase() {
+        phase = 2;
+        checkVerbBtn.style.display = 'none';
+        morphSection.style.display = 'block';
+
+        explanationBox.innerHTML = `
+            <strong>Aditz Perifrastikoa:</strong> ${currentSentenceData.v.join(' ')}<br>
+            <ul>
+                <li><strong>Aditz Nagusia:</strong> ${currentSentenceData.nag}</li>
+                <li><strong>Aditz Laguntzailea:</strong> ${currentSentenceData.lag}</li>
+            </ul>
+        `;
+        
+        aspectSelect.onchange = function() {
+            if (this.value === 'geroaldikoa') {
+                tenseGroup.style.display = 'none';
+            } else {
+                tenseGroup.style.display = 'block';
+            }
+        }
+    }
+
+    function checkMorphology() {
+        const userAspect = aspectSelect.value;
+        const userTense = tenseSelect.value;
+        
+        const correctAspect = currentSentenceData.asp;
+        const correctTense = currentSentenceData.ald;
+
+        let isCorrect = false;
+
+        if (correctAspect === 'geroaldikoa') {
+            if (userAspect === 'geroaldikoa') isCorrect = true;
+        } else {
+            if (userAspect === correctAspect && userTense === correctTense) isCorrect = true;
+        }
+
+        if (isCorrect) {
+            // Solo sumamos punto si no ha fallado en ningún paso de esta frase
+            if (!hasFailedCurrent) {
+                score++;
+                scoreDisplay.innerText = score;
+            }
+
+            finalFeedback.innerHTML = "<span class='success-text'>Erantzun zuzena!</span>";
+            document.getElementById('check-morph-btn').style.display = 'none';
+            nextBtn.classList.remove('hidden');
+        } else {
+            hasFailedCurrent = true; // Falló en la morfología
+            finalFeedback.innerHTML = "<span class='error-text'>Okerra da. Begiratu ondo eta saiatu berriro!</span>";
+        }
+    }
+
+    function nextQuestion() {
+        currentIndex++;
+        if (currentIndex < gameData.length) {
+            loadQuestion();
+        } else {
+            showEndScreen();
+        }
+    }
+
+    function showEndScreen() {
+        mainContainer.innerHTML = `
+            <h1 style="color:var(--green-mate)">Zorionak! Amaitu duzu!</h1>
+            <p>Puntuazioa: <strong>${score} / 30</strong></p>
+            <p>Idatzi zure izena txapelketan sartzeko:</p>
+            <input type="text" id="player-name" class="name-input" placeholder="Zure izena..." autocomplete="off">
+            <br>
+            <button class="btn" onclick="showChampion()">Jarraitu</button>
+        `;
+    }
+
+    function showChampion() {
+        const name = document.getElementById('player-name').value;
+        if (!name.trim()) return; // Obligar a poner nombre
+
+        mainContainer.innerHTML = `
+            <h1 style="color:var(--green-mate); font-size: 2.5rem;">ZORIONAK!</h1>
+            <div style="font-size: 5rem; margin: 20px 0;">🏆</div>
+            <h2 style="color:var(--text-dark)">${name}</h2>
+            <p style="font-size: 1.5rem; color: var(--green-mate);">da aditzen txapeldun berria!</p>
+            <br>
+            <button class="btn" onclick="location.reload()">Berriro hasi</button>
+        `;
+    }
+
+    // Arrancar
+    initGame();
+
+</script>
+
+</body>
+</html>
